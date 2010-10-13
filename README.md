@@ -1,6 +1,6 @@
 # Spock Extensions
 
-## `@TempDirectory`
+## @TempDirectory
 
 Used on a `File` property of a spec class this annotation will cause
 a temporary directory to be created and injected before each feature
