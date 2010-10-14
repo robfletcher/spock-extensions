@@ -1,7 +1,8 @@
 package com.energizedwork.spock.extensions
 
-import org.spockframework.runtime.model.FieldInfo
+import groovy.transform.InheritConstructors
 import org.spockframework.runtime.extension.*
+import org.spockframework.runtime.model.*
 
 class TempDirectoryExtension extends AbstractAnnotationDrivenExtension<TempDirectory> {
 
@@ -11,16 +12,13 @@ class TempDirectoryExtension extends AbstractAnnotationDrivenExtension<TempDirec
 	void visitFieldAnnotation(TempDirectory annotation, FieldInfo field) {
 		def tempDirectory = new File(tempDir, generateFilename(field.name))
 
-		field.parent.getTopSpec().with {
-			def interceptor = new TempDirectoryInterceptor(field, tempDirectory)
-			if (field.isShared()) {
-				setupSpecMethod.addInterceptor interceptor
-				cleanupSpecMethod.addInterceptor interceptor
-			} else {
-				setupMethod.addInterceptor interceptor
-				cleanupMethod.addInterceptor interceptor
-			}
+		def interceptor
+		if (field.isShared()) {
+			interceptor = new SharedTempDirectoryInterceptor(field, tempDirectory)
+		} else {
+			interceptor = new TempDirectoryInterceptor(field, tempDirectory)
 		}
+		interceptor.install(field.parent.getTopSpec())
 	}
 
 	private String generateFilename(String baseName) {
@@ -29,47 +27,71 @@ class TempDirectoryExtension extends AbstractAnnotationDrivenExtension<TempDirec
 
 }
 
-class TempDirectoryInterceptor extends AbstractMethodInterceptor {
+abstract class DirectoryManagingInterceptor extends AbstractMethodInterceptor {
 
 	private final FieldInfo field
 	private final File directory
 
-	TempDirectoryInterceptor(FieldInfo field, File directory) {
+	DirectoryManagingInterceptor(FieldInfo field, File directory) {
 		this.field = field
 		this.directory = directory
 	}
 
-	@Override
-	void interceptSetupSpecMethod(IMethodInvocation invocation) {
-		if (field.shared) setupDirectory(invocation.target)
-		invocation.proceed()
+	protected void setupDirectory(target) {
+		directory.mkdirs()
+		target[field.name] = directory
 	}
+
+	protected void destroyDirectory() {
+		directory.deleteDir()
+	}
+
+	abstract void install(SpecInfo spec)
+
+}
+
+@InheritConstructors
+class TempDirectoryInterceptor extends DirectoryManagingInterceptor {
 
 	@Override
 	void interceptSetupMethod(IMethodInvocation invocation) {
-		if (!field.shared) setupDirectory(invocation.target)
+		setupDirectory(invocation.target)
 		invocation.proceed()
 	}
 
 	@Override
 	void interceptCleanupMethod(IMethodInvocation invocation) {
-		if (!field.shared) destroyDirectory()
+		destroyDirectory()
+		invocation.proceed()
+	}
+
+	@Override
+	void install(SpecInfo spec) {
+		spec.setupMethod.addInterceptor this
+		spec.cleanupMethod.addInterceptor this
+	}
+
+}
+
+@InheritConstructors
+class SharedTempDirectoryInterceptor extends DirectoryManagingInterceptor {
+
+	@Override
+	void interceptSetupSpecMethod(IMethodInvocation invocation) {
+		setupDirectory(invocation.target)
 		invocation.proceed()
 	}
 
 	@Override
 	void interceptCleanupSpecMethod(IMethodInvocation invocation) {
-		if (field.shared) destroyDirectory()
+		destroyDirectory()
 		invocation.proceed()
 	}
 
-	private void setupDirectory(target) {
-		directory.mkdirs()
-		target[field.name] = directory
-	}
-
-	private void destroyDirectory() {
-		directory.deleteDir()
+	@Override
+	void install(SpecInfo spec) {
+		spec.setupSpecMethod.addInterceptor this
+		spec.cleanupSpecMethod.addInterceptor this
 	}
 
 }
