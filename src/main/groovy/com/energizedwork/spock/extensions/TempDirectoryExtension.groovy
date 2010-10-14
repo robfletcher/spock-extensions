@@ -1,10 +1,7 @@
 package com.energizedwork.spock.extensions
 
-import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension
 import org.spockframework.runtime.model.FieldInfo
-import org.spockframework.runtime.extension.IMethodInterceptor
-import org.spockframework.runtime.extension.IMethodInvocation
-import org.spockframework.runtime.extension.AbstractMethodInterceptor
+import org.spockframework.runtime.extension.*
 
 class TempDirectoryExtension extends AbstractAnnotationDrivenExtension<TempDirectory> {
 
@@ -12,9 +9,7 @@ class TempDirectoryExtension extends AbstractAnnotationDrivenExtension<TempDirec
 
 	@Override
 	void visitFieldAnnotation(TempDirectory annotation, FieldInfo field) {
-		println "visiting $field.name"
-
-		def tempDirectory = new File(tempDir, randomFilename())
+		def tempDirectory = new File(tempDir, generateFilename(field.name))
 
 		field.parent.getTopSpec().with {
 			def interceptor = new TempDirectoryInterceptor(field, tempDirectory)
@@ -28,8 +23,8 @@ class TempDirectoryExtension extends AbstractAnnotationDrivenExtension<TempDirec
 		}
 	}
 
-	private String randomFilename() {
-		UUID.randomUUID().toString()
+	private String generateFilename(String baseName) {
+		"$baseName-${Long.toHexString(System.currentTimeMillis())}"
 	}
 
 }

@@ -5,7 +5,9 @@
 Used on a `File` property of a spec class this annotation will cause
 a temporary directory to be created and injected before each feature
 method is run and destroyed afterwards. If the field is `@Shared` the
-directory is only destroyed after all feature methods have run.
+directory is only destroyed after all feature methods have run. You
+can have as many such fields as you like in a single spec, each will
+be generated with a unique name.
 
 Temporary directories are created inside `java.io.tmpdir`.
 

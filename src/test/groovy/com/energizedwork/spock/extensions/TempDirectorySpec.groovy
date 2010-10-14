@@ -8,11 +8,11 @@ class TempDirectorySpec extends Specification {
 	@Shared @TempDirectory File sharedTempDir
 
 	def cleanup() {
-		assert !tempDir.isDirectory(), "tempDir should have been deleted before cleanup"
+		assert !tempDir.exists(), "tempDir should have been deleted before cleanup"
 	}
 
 	def cleanupSpec() {
-		assert !sharedTempDir.isDirectory(), "sharedTempDir should have been deleted before cleanupSpec"
+		assert !sharedTempDir.exists(), "sharedTempDir should have been deleted before cleanupSpec"
 	}
 
 	def "temp directories are created before feature method"() {
@@ -36,6 +36,18 @@ class TempDirectorySpec extends Specification {
 	def "per feature temp directory is cleaned after each feature method"() {
 		expect:
 		tempDir.list() == [] as String[]
+	}
+
+	@Unroll
+	def "per feature temp directory is cleaned after each iteration of a data-driven feature"() {
+		when:
+		new File(tempDir, filename).createNewFile()
+
+		then:
+		tempDir.list() == [filename]
+
+		where:
+		filename << ["foo", "bar", "baz"]
 	}
 
 	def "per spec temp directory is not cleaned after each feature method"() {
