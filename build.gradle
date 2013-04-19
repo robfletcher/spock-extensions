@@ -6,8 +6,8 @@ repositories {
 }
 
 dependencies {
-	groovy "org.codehaus.groovy:groovy:2.0.8"
-	compile "org.spockframework:spock-core:0.7-groovy-2.0"
+	groovy "org.codehaus.groovy:groovy:1.8.8"
+	compile "org.spockframework:spock-core:0.7-groovy-1.8"
 }
 
 version = "1.0-SNAPSHOT"
