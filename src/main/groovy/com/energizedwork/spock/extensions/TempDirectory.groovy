@@ -12,6 +12,5 @@ import java.lang.annotation.Target
 @ExtensionAnnotation(TempDirectoryExtension)
 @interface TempDirectory {
     String baseDir() default 'build/test'
-
-    boolean clean() default true
+    boolean clean() default false
 }

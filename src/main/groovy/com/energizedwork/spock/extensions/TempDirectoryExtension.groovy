@@ -45,7 +45,7 @@ abstract class DirectoryManagingInterceptor extends AbstractMethodInterceptor {
         final testDirName = "${ specInstance.class.name }/${testName}"
         File testDir = new File(baseDir, testDirName).canonicalFile
 
-        if (testDir.directory) {
+        if (testDir.isDirectory() ) {
             // Creating new directory next to existing one
             for (int counter = 1; testDir.directory; counter++) {
                 testDir = new File(baseDir, testDirName + "_$counter").canonicalFile
@@ -58,26 +58,11 @@ abstract class DirectoryManagingInterceptor extends AbstractMethodInterceptor {
 
     protected void destroyDirectory(invocation) {
         final specInstance = getSpec(invocation)
-        def directory = specInstance."$fieldName"
+        File directory = specInstance."$fieldName"
 
         if (clean) {
-            delete(directory)
+            assert (directory.deleteDir() && !directory.isDirectory())
         }
-    }
-
-    protected File delete(File directory) {
-        for (f in directory.listFiles()) {
-            if (f.file) {
-                assert f.delete()
-            } else if (f.directory) {
-                delete(f)
-            } else {
-                throw new RuntimeException("Unknown File instance [$f]")
-            }
-        }
-
-        assert ((!directory.listFiles()) && (directory.delete()) && (!directory.directory))
-        directory
     }
 
     abstract void install(SpecInfo spec)

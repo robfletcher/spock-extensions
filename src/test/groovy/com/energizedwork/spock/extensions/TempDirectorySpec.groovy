@@ -4,26 +4,40 @@ import spock.lang.*
 
 class TempDirectorySpec extends Specification {
 
-    @TempDirectory File tempDir
+    @TempDirectory(clean=true) File tempDir
+    @TempDirectory File cleanFalseDir
     @Shared @TempDirectory File sharedTempDir
-    @Shared File pointerToTempDir
+    @Shared Iterable<File> cleanFalseDirs = []
+    @Shared Iterable<File> tempDirs = []
 
     def cleanup() {
         // We can't check the tempDir got deleted after cleanup in the cleanup method.
-        pointerToTempDir = tempDir
+        tempDirs << tempDir
+        cleanFalseDirs << cleanFalseDir
     }
 
     def cleanupSpec() {
-        assert !pointerToTempDir.exists(), "tempDir should have been deleted before cleanup"
+        cleanFalseDirs.each {
+            assert it.exists(), "cleanFalseDir should not have been deleted before cleanup"
+        }
+
+        tempDirs.each {
+            assert !it.isDirectory(), "tempDir (${it}) should have been deleted"
+        }
+
+        // Clean up after ourselves
+        cleanFalseDirs.each {
+            assert it.deleteDir(), "unable to clean cleanFalseDir"
+        }
 
         // We can't test this from our test, we'd have to use an ExternalSpec Runner to run a different spec
-        //assert !sharedTempDir.exists(), "sharedTempDir should have been deleted before cleanupSpec"
+        //assert sharedTempDir.exists(), "sharedTempDir should not have been deleted before cleanupSpec"
     }
 
     def "temp directories are created before feature method"() {
         expect:
-        tempDir != null
-        tempDir?.isDirectory()
+        cleanFalseDir != null
+        cleanFalseDir?.isDirectory()
 
         and:
         sharedTempDir != null
@@ -32,7 +46,7 @@ class TempDirectorySpec extends Specification {
 
     def "files can be added to temp directories"() {
         expect:
-        new File(tempDir, "foo").createNewFile()
+        new File(cleanFalseDir, "foo").createNewFile()
 
         and:
         new File(sharedTempDir, "bar").createNewFile()
@@ -40,16 +54,16 @@ class TempDirectorySpec extends Specification {
 
     def "per feature temp directory is cleaned after each feature method"() {
         expect:
-        tempDir.list() == [] as String[]
+        cleanFalseDir.list() == [] as String[]
     }
 
     @Unroll
     def "per feature temp directory is cleaned after each iteration of a data-driven feature"() {
         when:
-        new File(tempDir, filename).createNewFile()
+        new File(cleanFalseDir, filename).createNewFile()
 
         then:
-        tempDir.list() == [filename]
+        cleanFalseDir.list() == [filename]
 
         where:
         filename << ["foo", "bar", "baz"]
@@ -60,4 +74,8 @@ class TempDirectorySpec extends Specification {
         sharedTempDir.list() == ["bar"]
     }
 
+    def "multiple non-shared temp directories can exist without conflict"() {
+        expect:
+        cleanFalseDir.canonicalPath != tempDir.canonicalPath
+    }
 }
