@@ -1,14 +1,64 @@
+buildscript {
+    repositories {
+        jcenter()
+        maven {
+            url "http://dl.bintray.com/jfrog/jfrog-jars"
+        }
+    }
+    dependencies {
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:2.2.2"
+    }
+}
+
 apply plugin: "groovy"
-apply plugin: "maven"
+apply plugin: "maven-publish"
 
 repositories {
+    jcenter()
 	mavenCentral()
 }
 
 dependencies {
-	groovy "org.codehaus.groovy:groovy:1.8.8"
+	compile "org.codehaus.groovy:groovy:1.8.8"
 	compile "org.spockframework:spock-core:0.7-groovy-1.8"
 }
 
-version = "1.0-SNAPSHOT"
+version = "1.0"
 group = "com.energizedwork"
+
+task sourceJar(type: Jar) {
+    description "An archive of the source code"
+    classifier "sources"
+    from sourceSets.main.allJava, sourceSets.main.resources
+}
+
+task javadocJar(type: Jar) {
+    description "An archive of the JavaDocs"
+    classifier "javadoc"
+    from javadoc
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            artifact sourceJar {
+                classifier "sources"
+            }
+
+            artifact javadocJar {
+                classifier "api"
+            }
+        }
+    }
+    repositories {
+        maven {
+            url "https://api.bintray.com/maven/robfletcher/maven/spock-extensions"
+            credentials {
+                username = bintray_username
+                password = bintray_api_key
+            }
+        }
+    }
+}
