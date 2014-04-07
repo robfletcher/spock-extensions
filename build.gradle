@@ -6,7 +6,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:2.2.2"
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:2.2.3"
     }
 }
 
@@ -19,7 +19,7 @@ repositories {
 }
 
 dependencies {
-	compile "org.codehaus.groovy:groovy:1.8.8"
+	compile "org.codehaus.groovy:groovy:1.8.9"
 	compile "org.spockframework:spock-core:0.7-groovy-1.8"
 }
 
