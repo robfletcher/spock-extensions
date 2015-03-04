@@ -19,8 +19,8 @@ repositories {
 }
 
 dependencies {
-	compile "org.codehaus.groovy:groovy:1.8.9"
-	compile "org.spockframework:spock-core:0.7-groovy-1.8"
+	compile "org.codehaus.groovy:groovy:2.4.0"
+	compile "org.spockframework:spock-core:1.0-groovy-2.4"
 }
 
 version = "1.0"
